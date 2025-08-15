@@ -3,24 +3,74 @@ version: 0.2
 phases:
   pre_build:
     commands:
+      - echo "=== SISTEMA DE VERSIONAMENTO BIA ==="
       - echo Fazendo login no ECR...      
-      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 380278406175.dkr.ecr.us-east-1.amazonaws.com
-      - REPOSITORY_URI=380278406175.dkr.ecr.us-east-1.amazonaws.com/bia
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 039612859546.dkr.ecr.us-east-1.amazonaws.com
+      
+      # Configuração do repositório
+      - REPOSITORY_URI=039612859546.dkr.ecr.us-east-1.amazonaws.com/bia
+      
+      # Sistema de versionamento baseado em Git
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
-      - IMAGE_TAG=${COMMIT_HASH:=latest}
+      - BRANCH_NAME=$(echo $CODEBUILD_WEBHOOK_HEAD_REF | sed 's/refs\/heads\///' | sed 's/[^a-zA-Z0-9]/-/g')
+      - BUILD_DATE=$(date +%Y%m%d-%H%M%S)
+      - BUILD_NUMBER=${CODEBUILD_BUILD_NUMBER:-1}
+      
+      # Tags de versionamento
+      - IMAGE_TAG_HASH=${COMMIT_HASH}
+      - IMAGE_TAG_BRANCH=${BRANCH_NAME:-main}-${COMMIT_HASH}
+      - IMAGE_TAG_BUILD=build-${BUILD_NUMBER}-${COMMIT_HASH}
+      - IMAGE_TAG_DATE=${BUILD_DATE}-${COMMIT_HASH}
+      
+      # Tag principal para deploy
+      - IMAGE_TAG_DEPLOY=${IMAGE_TAG_HASH}
+      
+      # Log das versões
+      - echo "Git Commit Hash:" $COMMIT_HASH
+      - echo "Branch Name:" $BRANCH_NAME
+      - echo "Build Number:" $BUILD_NUMBER
+      - echo "Build Date:" $BUILD_DATE
+      - echo "Deploy Tag:" $IMAGE_TAG_DEPLOY
+      
   build:
     commands:
+      - echo "=== INICIANDO BUILD ==="
       - echo Build iniciado em `date`
-      - echo Gerando imagem da BIA...
-      - docker build -t $REPOSITORY_URI:latest .
-      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
+      - echo Gerando imagem da BIA com versionamento...
+      
+      # Build da imagem
+      - docker build -t $REPOSITORY_URI:$IMAGE_TAG_DEPLOY .
+      
+      # Criação de múltiplas tags para rastreabilidade
+      - docker tag $REPOSITORY_URI:$IMAGE_TAG_DEPLOY $REPOSITORY_URI:latest
+      - docker tag $REPOSITORY_URI:$IMAGE_TAG_DEPLOY $REPOSITORY_URI:$IMAGE_TAG_BRANCH
+      - docker tag $REPOSITORY_URI:$IMAGE_TAG_DEPLOY $REPOSITORY_URI:$IMAGE_TAG_BUILD
+      - docker tag $REPOSITORY_URI:$IMAGE_TAG_DEPLOY $REPOSITORY_URI:$IMAGE_TAG_DATE
+      
   post_build:
     commands:
+      - echo "=== FINALIZANDO BUILD ==="
       - echo Build finalizado com sucesso em `date`
-      - echo Fazendo push da imagem para o ECR...
+      - echo Fazendo push das imagens versionadas para o ECR...
+      
+      # Push de todas as tags
       - docker push $REPOSITORY_URI:latest
-      - docker push $REPOSITORY_URI:$IMAGE_TAG
+      - docker push $REPOSITORY_URI:$IMAGE_TAG_DEPLOY
+      - docker push $REPOSITORY_URI:$IMAGE_TAG_BRANCH
+      - docker push $REPOSITORY_URI:$IMAGE_TAG_BUILD
+      - docker push $REPOSITORY_URI:$IMAGE_TAG_DATE
+      
+      # Geração do artefato para ECS
       - echo Gerando artefato da imagem para o ECS
-      - printf '[{"name":"bia","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+      - printf '[{"name":"bia","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG_DEPLOY > imagedefinitions.json
+      
+      # Log final das versões criadas
+      - echo "=== VERSÕES CRIADAS ==="
+      - echo "Deploy Tag:" $REPOSITORY_URI:$IMAGE_TAG_DEPLOY
+      - echo "Latest Tag:" $REPOSITORY_URI:latest
+      - echo "Branch Tag:" $REPOSITORY_URI:$IMAGE_TAG_BRANCH
+      - echo "Build Tag:" $REPOSITORY_URI:$IMAGE_TAG_BUILD
+      - echo "Date Tag:" $REPOSITORY_URI:$IMAGE_TAG_DATE
+
 artifacts:
   files: imagedefinitions.json
