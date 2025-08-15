@@ -1,21 +1,21 @@
 #!/bin/bash
 
-# Script principal para gerenciamento de versões
+# Script principal para gerenciamento de versões (Simplificado)
 # Projeto BIA - Sistema de Versionamento
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 show_help() {
-    echo "=== GERENCIADOR DE VERSÕES - PROJETO BIA ==="
+    echo "=== GERENCIADOR DE VERSÕES - PROJETO BIA (SIMPLIFICADO) ==="
     echo ""
     echo "Uso: $0 <comando> [argumentos]"
     echo ""
     echo "📋 COMANDOS DISPONÍVEIS:"
     echo ""
     echo "  list                          Lista todas as versões disponíveis no ECR"
-    echo "  info <tag>                    Mostra informações detalhadas de uma versão"
-    echo "  rollback <tag>                Faz rollback para uma versão específica"
-    echo "  compare <tag1> <tag2>         Compara duas versões"
+    echo "  info <hash>                   Mostra informações detalhadas de uma versão"
+    echo "  rollback <hash>               Faz rollback para uma versão específica"
+    echo "  compare <hash1> <hash2>       Compara duas versões"
     echo "  current                       Mostra a versão atual em produção"
     echo "  help                          Mostra esta ajuda"
     echo ""
@@ -27,13 +27,17 @@ show_help() {
     echo "  $0 compare latest a1b2c3d     # Compara latest com a1b2c3d"
     echo "  $0 current                    # Mostra versão atual"
     echo ""
-    echo "🔧 SISTEMA DE TAGS:"
+    echo "🔧 SISTEMA DE TAGS SIMPLIFICADO:"
     echo ""
     echo "  a1b2c3d                       Commit hash (7 caracteres)"
-    echo "  main-a1b2c3d                  Branch + commit hash"
-    echo "  build-123-a1b2c3d             Build number + commit hash"
-    echo "  20250131-143022-a1b2c3d       Data/hora + commit hash"
     echo "  latest                        Versão mais recente"
+    echo ""
+    echo "💡 VANTAGENS DA SIMPLIFICAÇÃO:"
+    echo ""
+    echo "  ✅ Menos tags no ECR (mais limpo)"
+    echo "  ✅ Foco no essencial (hash do commit)"
+    echo "  ✅ Rastreabilidade completa mantida"
+    echo "  ✅ Rollback simples e direto"
     echo ""
 }
 
@@ -88,24 +92,24 @@ case $COMMAND in
         ;;
     "info")
         if [ $# -eq 0 ]; then
-            echo "❌ Erro: Tag não fornecida"
-            echo "Uso: $0 info <tag>"
+            echo "❌ Erro: Hash não fornecido"
+            echo "Uso: $0 info <hash>"
             exit 1
         fi
         $SCRIPT_DIR/scripts/version-info.sh $1
         ;;
     "rollback")
         if [ $# -eq 0 ]; then
-            echo "❌ Erro: Tag não fornecida"
-            echo "Uso: $0 rollback <tag>"
+            echo "❌ Erro: Hash não fornecido"
+            echo "Uso: $0 rollback <hash>"
             exit 1
         fi
         $SCRIPT_DIR/scripts/rollback.sh $1
         ;;
     "compare")
         if [ $# -ne 2 ]; then
-            echo "❌ Erro: Duas tags devem ser fornecidas"
-            echo "Uso: $0 compare <tag1> <tag2>"
+            echo "❌ Erro: Dois hashes devem ser fornecidos"
+            echo "Uso: $0 compare <hash1> <hash2>"
             exit 1
         fi
         $SCRIPT_DIR/scripts/compare-versions.sh $1 $2

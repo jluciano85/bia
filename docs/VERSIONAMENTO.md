@@ -1,39 +1,41 @@
-# Sistema de Versionamento - Projeto BIA
+# Sistema de Versionamento Simplificado - Projeto BIA
 
 ## Visão Geral
 
-O sistema de versionamento do projeto BIA utiliza Git hash como base para criar versões rastreáveis e permitir rollbacks seguros. Cada deploy gera múltiplas tags no ECR para facilitar a identificação e gerenciamento de versões.
+O sistema de versionamento do projeto BIA utiliza Git hash como base para criar versões rastreáveis e permitir rollbacks seguros. **Versão simplificada** que foca apenas no essencial: hash do commit de 7 caracteres.
 
-## Tipos de Tags Geradas
+## Tipos de Tags Geradas (Simplificado)
 
 ### 1. Commit Hash (Tag Principal)
 - **Formato:** `a1b2c3d` (7 caracteres)
-- **Uso:** Tag principal para deploy
+- **Uso:** Tag principal para deploy e rollback
 - **Exemplo:** `f4a2b1c`
 
-### 2. Branch + Commit
-- **Formato:** `{branch}-{hash}`
-- **Uso:** Identificar de qual branch veio o commit
-- **Exemplo:** `main-f4a2b1c`, `develop-f4a2b1c`
-
-### 3. Build Number + Commit
-- **Formato:** `build-{number}-{hash}`
-- **Uso:** Rastrear builds sequenciais
-- **Exemplo:** `build-123-f4a2b1c`
-
-### 4. Data/Hora + Commit
-- **Formato:** `{YYYYMMDD-HHMMSS}-{hash}`
-- **Uso:** Timestamp exato do build
-- **Exemplo:** `20250131-143022-f4a2b1c`
-
-### 5. Latest
+### 2. Latest
 - **Formato:** `latest`
 - **Uso:** Sempre aponta para a versão mais recente
 
+## Vantagens da Simplificação
+
+### ✅ ECR Mais Limpo
+- Apenas 2 tags por deploy (hash + latest)
+- Menos poluição visual no registry
+- Foco no essencial
+
+### ✅ Rastreabilidade Mantida
+- Hash do commit garante rastreabilidade completa
+- Vínculo direto com o código no Git
+- Histórico completo preservado
+
+### ✅ Rollback Simples
+- Comando direto: `./version-manager.sh rollback a1b2c3d`
+- Sem confusão entre múltiplas tags
+- Processo mais rápido
+
 ## Arquivos do Sistema
 
-### buildspec-versioned.yml
-Buildspec aprimorado que gera todas as tags de versionamento automaticamente.
+### buildspec.yml (Simplificado)
+Buildspec que gera apenas as tags essenciais automaticamente.
 
 ### Scripts de Gerenciamento
 
@@ -47,33 +49,28 @@ Buildspec aprimorado que gera todas as tags de versionamento automaticamente.
 ```
 
 #### scripts/list-versions.sh
-Lista todas as versões disponíveis no ECR, organizadas por tipo.
+Lista versões disponíveis, focando em hashes de 7 caracteres.
 
 #### scripts/rollback.sh
-Faz rollback para uma versão específica, atualizando o serviço ECS.
+Faz rollback para uma versão específica.
 
 #### scripts/version-info.sh
-Mostra informações detalhadas de uma versão específica.
+Mostra informações detalhadas de uma versão.
 
 #### scripts/compare-versions.sh
 Compara duas versões lado a lado.
 
 ## Como Usar
 
-### 1. Configurar o Pipeline
-Substitua o `buildspec.yml` atual pelo `buildspec-versioned.yml`:
-
-```bash
-mv buildspec.yml buildspec-original.yml
-mv buildspec-versioned.yml buildspec.yml
-```
+### 1. Sistema Já Ativo
+O buildspec simplificado já está configurado e ativo.
 
 ### 2. Fazer Deploy
-O deploy normal via CodePipeline agora gerará automaticamente todas as tags:
+O deploy normal via push gerará automaticamente apenas as tags essenciais:
 
 ```bash
 git add .
-git commit -m "Implementar sistema de versionamento"
+git commit -m "Minha alteração"
 git push origin main
 ```
 
@@ -84,17 +81,17 @@ git push origin main
 
 ### 4. Ver Informações de uma Versão
 ```bash
-./version-manager.sh info f4a2b1c
+./version-manager.sh info a1b2c3d
 ```
 
 ### 5. Fazer Rollback
 ```bash
-./version-manager.sh rollback f4a2b1c
+./version-manager.sh rollback a1b2c3d
 ```
 
 ### 6. Comparar Versões
 ```bash
-./version-manager.sh compare latest f4a2b1c
+./version-manager.sh compare latest a1b2c3d
 ```
 
 ### 7. Ver Versão Atual
@@ -102,77 +99,70 @@ git push origin main
 ./version-manager.sh current
 ```
 
-## Fluxo de Trabalho
+## Fluxo de Trabalho Simplificado
 
 ### Deploy Normal
 1. Desenvolvedor faz push para o repositório
 2. CodePipeline detecta mudança
-3. CodeBuild executa buildspec-versioned.yml
-4. Sistema gera múltiplas tags baseadas no Git hash
-5. Imagem é enviada para ECR com todas as tags
+3. CodeBuild executa buildspec simplificado
+4. Sistema gera apenas 2 tags: `<hash>` e `latest`
+5. Imagem é enviada para ECR
 6. ECS é atualizado com a nova versão
 
 ### Rollback
 1. Identificar versão desejada: `./version-manager.sh list`
-2. Verificar informações: `./version-manager.sh info <tag>`
-3. Executar rollback: `./version-manager.sh rollback <tag>`
-4. Sistema atualiza ECS automaticamente
-5. Aguardar estabilização do serviço
+2. Executar rollback: `./version-manager.sh rollback <hash>`
+3. Sistema atualiza ECS automaticamente
 
-## Vantagens do Sistema
+## Comparação: Antes vs Depois
 
-### Rastreabilidade Completa
-- Cada versão é vinculada a um commit específico
-- Múltiplas formas de identificar a mesma versão
-- Histórico completo no ECR
+### ❌ Sistema Anterior (Complexo)
+- 5 tags por deploy
+- ECR poluído com múltiplas tags
+- Confusão na escolha da tag
+- Mais tempo de push
 
-### Rollback Seguro
-- Rollback para qualquer versão anterior
-- Verificação automática de existência da versão
-- Atualização automática do ECS
+### ✅ Sistema Atual (Simplificado)
+- 2 tags por deploy
+- ECR limpo e organizado
+- Foco no hash do commit
+- Push mais rápido
 
-### Facilidade de Uso
-- Scripts automatizados para todas as operações
-- Interface unificada via version-manager.sh
-- Informações detalhadas de cada versão
+## Exemplo Prático
 
-### Compatibilidade
-- Funciona com a infraestrutura ECS existente
-- Não quebra o pipeline atual
-- Mantém compatibilidade com `latest`
+### Deploy de uma Alteração
+```bash
+# Commit: f70f0df
+git commit -m "Alterar botão para 'Adicionar Tarefas'"
+git push origin main
+
+# Tags geradas automaticamente:
+# - 039612859546.dkr.ecr.us-east-1.amazonaws.com/bia:f70f0df
+# - 039612859546.dkr.ecr.us-east-1.amazonaws.com/bia:latest
+```
+
+### Rollback para Versão Anterior
+```bash
+# Listar versões
+./version-manager.sh list
+
+# Fazer rollback
+./version-manager.sh rollback a1b2c3d
+
+# Verificar se funcionou
+./version-manager.sh current
+```
 
 ## Configurações Importantes
 
 ### Variáveis do Buildspec
 - `COMMIT_HASH`: Hash do commit (7 caracteres)
-- `BRANCH_NAME`: Nome do branch (sanitizado)
-- `BUILD_NUMBER`: Número sequencial do build
-- `BUILD_DATE`: Data/hora do build
+- `IMAGE_TAG`: Tag principal (igual ao hash)
 
 ### Configurações ECS
-- **Cluster:** `bia-cluster-alb` (ou `cluster-bia`)
-- **Service:** `bia-service`
-- **Task Definition:** `bia-tf`
-
-### Permissões Necessárias
-- ECR: `GetAuthorizationToken`, `BatchCheckLayerAvailability`, `GetDownloadUrlForLayer`, `BatchGetImage`, `PutImage`
-- ECS: `DescribeServices`, `DescribeTaskDefinition`, `RegisterTaskDefinition`, `UpdateService`
-
-## Troubleshooting
-
-### Erro: "Versão não encontrada"
-- Verificar se a tag existe: `./version-manager.sh list`
-- Confirmar ortografia da tag
-
-### Erro: "Falha ao atualizar ECS"
-- Verificar permissões IAM
-- Confirmar nomes do cluster e service
-- Verificar logs do CloudWatch
-
-### Rollback não estabiliza
-- Verificar health checks da aplicação
-- Confirmar conectividade com RDS
-- Verificar logs do container
+- **Cluster:** `cluster-bia`
+- **Service:** `service-bia`
+- **Task Definition:** `task-def-bia`
 
 ## Monitoramento
 
@@ -182,20 +172,42 @@ git push origin main
 - **Application:** Logs da aplicação BIA
 
 ### Métricas
-- Tempo de build
+- Tempo de build (reduzido)
 - Tamanho das imagens
-- Tempo de deploy
-- Health check status
+- Tempo de deploy (mais rápido)
 
-## Próximos Passos
+## Troubleshooting
 
-### Melhorias Futuras
-- Integração com notificações (SNS/Slack)
-- Cleanup automático de versões antigas
-- Métricas de rollback
-- Interface web para gerenciamento
+### Erro: "Versão não encontrada"
+- Verificar se o hash existe: `./version-manager.sh list`
+- Confirmar que são 7 caracteres exatos
 
-### Automação Adicional
-- Rollback automático em caso de falha
-- Testes automatizados pós-deploy
-- Aprovações para rollback em produção
+### Rollback não funciona
+- Verificar permissões IAM
+- Confirmar nomes do cluster e service
+
+## Benefícios da Simplificação
+
+### 🚀 Performance
+- Push mais rápido (menos tags)
+- Menos operações no ECR
+- Deploy mais eficiente
+
+### 🧹 Organização
+- ECR mais limpo
+- Foco no essencial
+- Menos confusão
+
+### 💡 Simplicidade
+- Comandos mais diretos
+- Menos opções para escolher
+- Processo mais claro
+
+### 🔍 Rastreabilidade
+- Hash do commit mantém rastreabilidade completa
+- Vínculo direto com o Git
+- Histórico preservado
+
+## Conclusão
+
+O sistema simplificado mantém todas as funcionalidades essenciais de versionamento e rollback, mas com foco na simplicidade e eficiência. Ideal para o projeto BIA que prioriza clareza e facilidade de uso para fins educacionais.

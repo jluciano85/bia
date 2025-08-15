@@ -1,16 +1,15 @@
 #!/bin/bash
 
-# Script para comparar duas versões
+# Script para comparar duas versões (Simplificado)
 # Projeto BIA - Sistema de Versionamento
 
 if [ $# -ne 2 ]; then
-    echo "❌ Erro: Duas tags devem ser fornecidas"
-    echo "Uso: $0 <TAG1> <TAG2>"
+    echo "❌ Erro: Dois hashes devem ser fornecidos"
+    echo "Uso: $0 <HASH1> <HASH2>"
     echo ""
     echo "Exemplos:"
     echo "  $0 a1b2c3d b4c5d6e               # Comparar dois commits"
     echo "  $0 latest a1b2c3d                # Comparar latest com commit específico"
-    echo "  $0 main-a1b2c3d develop-b4c5d6e  # Comparar versões de branches"
     echo ""
     exit 1
 fi

@@ -25,7 +25,7 @@ REPOSITORY_URI="$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/$REPOSITORY_NAME"
 # Configurações ECS
 CLUSTER_NAME="cluster-bia"
 SERVICE_NAME="service-bia"
-TASK_DEFINITION_FAMILY="bia-tf"
+TASK_DEFINITION_FAMILY="task-def-bia"
 
 echo "=== ROLLBACK DO PROJETO BIA ==="
 echo "🎯 Target Tag: $TARGET_TAG"

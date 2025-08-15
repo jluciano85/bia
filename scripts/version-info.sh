@@ -1,16 +1,15 @@
 #!/bin/bash
 
-# Script para obter informações detalhadas de uma versão
+# Script para obter informações detalhadas de uma versão (Simplificado)
 # Projeto BIA - Sistema de Versionamento
 
 if [ $# -eq 0 ]; then
-    echo "❌ Erro: Tag da versão não fornecida"
-    echo "Uso: $0 <TAG>"
+    echo "❌ Erro: Hash da versão não fornecido"
+    echo "Uso: $0 <HASH>"
     echo ""
     echo "Exemplos:"
     echo "  $0 a1b2c3d                    # Info do commit hash"
     echo "  $0 latest                     # Info da versão latest"
-    echo "  $0 main-a1b2c3d               # Info da versão de branch"
     echo ""
     echo "Para ver versões disponíveis: ./scripts/list-versions.sh"
     exit 1
@@ -61,7 +60,7 @@ echo "🔍 Status no ECS:"
 # Configurações ECS
 CLUSTER_NAME="cluster-bia"
 SERVICE_NAME="service-bia"
-TASK_DEFINITION_FAMILY="bia-tf"
+TASK_DEFINITION_FAMILY="task-def-bia"
 
 # Obter task definition atual do serviço
 CURRENT_SERVICE_INFO=$(aws ecs describe-services \
@@ -91,31 +90,13 @@ else
     echo "  ❓ Não foi possível verificar o status no ECS"
 fi
 
-# Análise da tag para extrair informações
+# Análise da tag
 echo ""
 echo "🔍 Análise da Tag:"
 
 if [[ $TARGET_TAG =~ ^[a-f0-9]{7}$ ]]; then
-    echo "  📌 Tipo: Commit Hash"
+    echo "  📌 Tipo: Commit Hash (7 caracteres)"
     echo "  🔗 Git Commit: $TARGET_TAG"
-elif [[ $TARGET_TAG =~ ^build-[0-9]+-[a-f0-9]{7}$ ]]; then
-    BUILD_NUM=$(echo $TARGET_TAG | sed 's/build-\([0-9]*\)-.*/\1/')
-    COMMIT_HASH=$(echo $TARGET_TAG | sed 's/build-[0-9]*-\(.*\)/\1/')
-    echo "  📌 Tipo: Build Number"
-    echo "  🔢 Build: $BUILD_NUM"
-    echo "  🔗 Git Commit: $COMMIT_HASH"
-elif [[ $TARGET_TAG =~ ^[0-9]{8}-[0-9]{6}-[a-f0-9]{7}$ ]]; then
-    DATE_PART=$(echo $TARGET_TAG | sed 's/\([0-9]*-[0-9]*\)-.*/\1/')
-    COMMIT_HASH=$(echo $TARGET_TAG | sed 's/[0-9]*-[0-9]*-\(.*\)/\1/')
-    echo "  📌 Tipo: Data/Hora"
-    echo "  📅 Build Date: $DATE_PART"
-    echo "  🔗 Git Commit: $COMMIT_HASH"
-elif [[ $TARGET_TAG == *"-"* ]]; then
-    BRANCH_PART=$(echo $TARGET_TAG | sed 's/\(.*\)-[a-f0-9]*/\1/')
-    COMMIT_HASH=$(echo $TARGET_TAG | sed 's/.*-\([a-f0-9]*\)/\1/')
-    echo "  📌 Tipo: Branch"
-    echo "  🌿 Branch: $BRANCH_PART"
-    echo "  🔗 Git Commit: $COMMIT_HASH"
 elif [[ $TARGET_TAG == "latest" ]]; then
     echo "  📌 Tipo: Latest (versão mais recente)"
 else
